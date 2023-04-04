@@ -1,0 +1,18 @@
+[package]
+name = "ssh-test-server"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+color-eyre = "0.6.2"
+thrussh = "0.33.5"
+thrussh-keys = "0.21.0"
+futures = "0.3.28"
+tokio = "1.27.0"
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3.16", features = ["env-filter", "tracing-log"] }
+clap = { version = "4.1.14", features = ["derive"] }
+
+
