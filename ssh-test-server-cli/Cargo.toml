@@ -13,13 +13,11 @@ categories = ["development-tools::testing"]
 
 
 [dependencies]
-color-eyre = "0.6.2"
-thrussh = "0.33.5"
-thrussh-keys = "0.21.0"
-futures = "0.3.28"
-tokio = "1.27.0"
+anyhow = "1.0.70"
+tokio = { version = "1.26.0", features = ["rt-multi-thread", "macros", "signal", "fs"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter", "tracing-log"] }
 clap = { version = "4.1.14", features = ["derive"] }
+ssh-test-server = { path = "../ssh-test-server" }
 
 

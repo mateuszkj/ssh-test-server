@@ -13,13 +13,30 @@ categories = ["development-tools::testing"]
 
 
 [dependencies]
-color-eyre = "0.6.2"
-thrussh = "0.33.5"
-thrussh-keys = "0.21.0"
+anyhow = "1.0.70"
+russh = "0.37.1"
+russh-keys = "0.37.1"
 futures = "0.3.28"
 tokio = "1.27.0"
 tracing = "0.1.37"
-tracing-subscriber = { version = "0.3.16", features = ["env-filter", "tracing-log"] }
-clap = { version = "4.1.14", features = ["derive"] }
+cmdline_words_parser = "0.2.1"
+async-trait = "0.1.68"
+portpicker = "0.1"
+rand = "0.8"
 
+
+[dev-dependencies]
+tokio = { version = "1.26.0", features = ["rt-multi-thread", "macros"] }
+tracing-test = "0.2.4"
+t-ssh-client = "0.2.1"
+ssh2 = "0.9.4"
+#cucumber = "0.19.1"
+cucumber = { git = "https://github.com/cucumber-rs/cucumber.git", features = ["tracing"]}
+timeout-readwrite = "0.3.3"
+
+
+
+[[test]]
+name = "ssh"
+harness = false  # allows Cucumber to print output instead of libtest
 
