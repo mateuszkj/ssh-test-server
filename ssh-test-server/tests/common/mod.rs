@@ -1,6 +1,5 @@
-use russh::Error::PacketAuth;
 use ssh2::{Channel, Session};
-use std::io::{BufRead, BufReader, Read, Write};
+use std::io::{Read, Write};
 use tracing::info;
 
 pub async fn run_ssh_command<F>(
@@ -21,19 +20,24 @@ where
         let mut sess = Session::new().unwrap();
         sess.set_tcp_stream(tcp);
         sess.handshake().unwrap();
-        sess.set_timeout(1000);
+        sess.set_timeout(5000);
 
         sess.userauth_password(&username, &password).unwrap();
         assert!(sess.authenticated());
+        info!("ssh authenticated");
 
         let mut channel = sess.channel_session().unwrap();
+        info!("channel");
         f(&mut channel);
+        info!("f");
 
         let mut stdout = String::new();
         channel.read_to_string(&mut stdout).unwrap();
+        info!("got stdout");
 
         let mut stderr = String::new();
         channel.stderr().read_to_string(&mut stderr).unwrap();
+        info!("got stderr");
 
         let exit_code = channel.exit_status().unwrap();
         (stdout, stderr, exit_code)

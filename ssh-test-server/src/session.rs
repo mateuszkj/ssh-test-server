@@ -55,11 +55,11 @@ async fn execute_command(command: Vec<u8>, channel: ChannelId, handle: Handle) {
     } else if program == "exit" {
         handle.exit_status_request(channel, 0).await.unwrap();
         handle.close(channel).await.unwrap();
+    } else {
+        let msg = format!("{program}: command not found");
+        send_stderr(channel, &handle, &msg).await;
+        handle.exit_status_request(channel, 127).await.unwrap();
     }
-
-    let msg = format!("Command not found: {program}");
-    send_stderr(channel, &handle, &msg).await;
-    handle.exit_status_request(channel, 127).await.unwrap();
 }
 
 #[async_trait]
@@ -114,6 +114,28 @@ impl server::Handler for SshConnection {
         if !stdout.is_empty() {
             session.data(channel, mem::take(&mut stdout));
         }
+        Ok((self, session))
+    }
+
+    async fn exec_request(
+        self,
+        channel: ChannelId,
+        data: &[u8],
+        session: Session,
+    ) -> Result<(Self, Session), Self::Error> {
+        info!(
+            "exec_request channel: {channel:?} data = {:?} id={}",
+            std::str::from_utf8(data),
+            self.id,
+        );
+
+        let cmd = data.to_vec();
+        let handle = session.handle();
+        execute_command(cmd, channel, handle).await;
+        let handle = session.handle();
+        handle.channel_success(channel).await.unwrap();
+        handle.close(channel).await.unwrap();
+
         Ok((self, session))
     }
 }

@@ -64,7 +64,7 @@ fn got_command_result(world: &mut SshWorld, status_code: i32, stdout: String, st
 async fn password_has_been_changed(world: &mut SshWorld) {
     let new_pass = format!("{SSH_PASS}_changed");
     let (_, _, status_code) =
-        common::run_ssh_command(&world.remote_addr, &SSH_USER, &new_pass, |channel| {
+        common::run_ssh_command(&world.remote_addr, SSH_USER, &new_pass, |channel| {
             channel.exec("echo abc").unwrap();
         })
         .await;
