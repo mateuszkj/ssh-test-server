@@ -1,5 +1,5 @@
 /// Ssh user
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct User {
     login: String,
     password: String,
@@ -7,10 +7,10 @@ pub struct User {
 }
 
 impl User {
-    pub fn new(login: &str, password: &str) -> Self {
+    pub fn new<L: Into<String>, P: Into<String>>(login: L, password: P) -> Self {
         Self {
-            login: login.to_string(),
-            password: password.to_string(),
+            login: login.into(),
+            password: password.into(),
             admin: false,
         }
     }

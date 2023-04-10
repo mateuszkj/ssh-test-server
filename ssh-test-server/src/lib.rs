@@ -1,5 +1,6 @@
 use crate::user::User;
 use russh_keys::key::PublicKey;
+use russh_keys::PublicKeyBase64;
 use std::collections::HashMap;
 
 pub mod builder;
@@ -32,7 +33,7 @@ impl SshServer {
         format!(
             "{} {}",
             self.server_public_key.name(),
-            self.server_public_key.fingerprint()
+            self.server_public_key.public_key_base64()
         )
     }
 }
