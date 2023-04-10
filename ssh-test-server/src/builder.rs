@@ -6,6 +6,7 @@ use rand::Rng;
 use russh::{server, MethodSet};
 use russh_keys::key::KeyPair;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::net::TcpListener;
 use tracing::{debug, info};
 
@@ -19,6 +20,13 @@ pub struct SshServerBuilder {
 impl SshServerBuilder {
     pub fn add_user(mut self, user: User) -> Self {
         self.users.push(user);
+        self
+    }
+
+    pub fn add_users(mut self, users: &[User]) -> Self {
+        for u in users {
+            self.users.push(u.clone());
+        }
         self
     }
 
@@ -53,6 +61,7 @@ impl SshServerBuilder {
 
         let mut config = server::Config {
             methods: MethodSet::PASSWORD,
+            auth_rejection_time: Duration::from_secs(0),
             ..Default::default()
         };
         config.keys.push(server_keys);
