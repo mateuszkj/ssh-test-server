@@ -1,7 +1,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use russh::server::{Auth, Handle, Handler, Msg, Response, Session};
-use russh::{server, Channel, ChannelId, CryptoVec, Pty};
+use russh::{server, Channel, ChannelId, ChannelMsg, CryptoVec, Pty};
 use russh_keys::key::PublicKey;
 use std::env::var;
 use std::mem;
@@ -142,6 +142,8 @@ impl Handler for SshConnection {
         session: Session,
     ) -> Result<(Self, bool, Session), Self::Error> {
         info!("channel_open_session channel={}", channel.id());
+        let handle = session.handle();
+
         tokio::spawn(async move {
             let id = channel.id();
             let span = span!(Level::INFO, "channel", id = id.to_string());
@@ -149,6 +151,19 @@ impl Handler for SshConnection {
 
             while let Some(msg) = channel.wait().await {
                 info!("msg={msg:?}");
+                match msg {
+                    ChannelMsg::RequestPty { want_reply, .. } => {
+                        if want_reply {
+                            handle.channel_success(id).await.unwrap();
+                        }
+                    }
+                    ChannelMsg::RequestShell { want_reply, .. } => {
+                        if want_reply {
+                            handle.channel_success(id).await.unwrap();
+                        }
+                    }
+                    _ => {}
+                }
             }
             info!("closed");
         });
