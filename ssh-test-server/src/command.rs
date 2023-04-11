@@ -5,15 +5,15 @@ use tracing::debug;
 
 async fn send_stderr(channel: ChannelId, handle: &Handle, msg: &str) {
     let mut stderr = CryptoVec::from_slice(msg.as_bytes());
-    stderr.push(b'\n');
     stderr.push(b'\r');
+    stderr.push(b'\n');
     handle.extended_data(channel, 1, stderr).await.unwrap();
 }
 
 async fn send_stdout(channel: ChannelId, handle: &Handle, msg: &str) {
     let mut stdout = CryptoVec::from_slice(msg.as_bytes());
-    stdout.push(b'\n');
     stdout.push(b'\r');
+    stdout.push(b'\n');
     handle.data(channel, stdout).await.unwrap();
 }
 

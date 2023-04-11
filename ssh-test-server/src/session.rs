@@ -162,8 +162,8 @@ impl Handler for SshConnection {
                                 handle.exit_status_request(id, 130).await.unwrap();
                                 handle.close(id).await.unwrap();
                             } else if *b == b'\r' || *b == b'\n' {
-                                stdout.push(b'\n');
                                 stdout.push(b'\r');
+                                stdout.push(b'\n');
                                 handle.data(id, mem::take(&mut stdout)).await.unwrap();
                                 let cmd = mem::take(&mut command_buf);
                                 command::execute_command(cmd, id, &handle, &user, &users).await;
