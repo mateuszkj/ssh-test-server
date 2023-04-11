@@ -5,7 +5,7 @@ use russh::server::{Auth, Handler, Msg, Response, Session};
 use russh::{Channel, ChannelId, ChannelMsg, CryptoVec};
 use russh_keys::key::PublicKey;
 use std::mem;
-use tracing::{debug, info};
+use tracing::debug;
 
 pub(crate) struct SshConnection {
     id: usize,
@@ -28,7 +28,7 @@ impl Handler for SshConnection {
     type Error = anyhow::Error;
 
     async fn auth_none(self, user: &str) -> Result<(Self, Auth), Self::Error> {
-        info!("auth_none user={user}");
+        debug!("auth_none user={user}");
         Ok((
             self,
             Auth::Reject {
@@ -47,13 +47,13 @@ impl Handler for SshConnection {
             if password == u.password() {
                 self.user = Some(u.login().to_string());
                 drop(users);
-                info!("auth_password user={user} password={password} Accepted");
+                debug!("auth_password user={user} password={password} Accepted");
                 return Ok((self, Auth::Accept));
             }
         }
 
         drop(users);
-        info!("auth_password user={user} password={password} Rejected");
+        debug!("auth_password user={user} password={password} Rejected");
         Ok((
             self,
             Auth::Reject {
@@ -67,7 +67,7 @@ impl Handler for SshConnection {
         user: &str,
         public_key: &PublicKey,
     ) -> Result<(Self, Auth), Self::Error> {
-        info!("auth_publickey user={user} public_key={public_key:?}");
+        debug!("auth_publickey user={user} public_key={public_key:?}");
 
         Ok((
             self,
@@ -83,7 +83,7 @@ impl Handler for SshConnection {
         submethods: &str,
         _response: Option<Response<'async_trait>>,
     ) -> Result<(Self, Auth), Self::Error> {
-        info!("auth_keyboard_interactive user={user} submethods={submethods:?}");
+        debug!("auth_keyboard_interactive user={user} submethods={submethods:?}");
         Ok((
             self,
             Auth::Reject {
@@ -93,7 +93,7 @@ impl Handler for SshConnection {
     }
 
     async fn auth_succeeded(self, session: Session) -> Result<(Self, Session), Self::Error> {
-        info!("auth_succeeded");
+        debug!("auth_succeeded");
         Ok((self, session))
     }
 
@@ -102,7 +102,7 @@ impl Handler for SshConnection {
         channel: ChannelId,
         session: Session,
     ) -> Result<(Self, Session), Self::Error> {
-        info!("channel_close channel={channel}");
+        debug!("channel_close channel={channel}");
         Ok((self, session))
     }
 
@@ -111,7 +111,7 @@ impl Handler for SshConnection {
         channel: ChannelId,
         session: Session,
     ) -> Result<(Self, Session), Self::Error> {
-        info!("channel_eof channel={channel}");
+        debug!("channel_eof channel={channel}");
         Handler::channel_eof(self, channel, session).await
     }
 
@@ -121,7 +121,7 @@ impl Handler for SshConnection {
         session: Session,
     ) -> Result<(Self, bool, Session), Self::Error> {
         let session_id = self.id;
-        info!(session_id, "channel_open_session channel={}", channel.id());
+        debug!(session_id, "channel_open_session channel={}", channel.id());
         let handle = session.handle();
         let user = self.user.clone().unwrap();
         let users = self.users.clone();
@@ -199,7 +199,7 @@ impl Handler for SshConnection {
                     }
                 }
             }
-            info!(session_id, "closed");
+            debug!(session_id, "closed");
         });
 
         Ok((self, true, session))
@@ -212,7 +212,7 @@ impl Handler for SshConnection {
         originator_port: u32,
         session: Session,
     ) -> Result<(Self, bool, Session), Self::Error> {
-        info!("channel_open_x11 channel={} originator_address={originator_address} originator_port={originator_port}", channel.id());
+        debug!("channel_open_x11 channel={} originator_address={originator_address} originator_port={originator_port}", channel.id());
         Ok((self, false, session))
     }
     async fn channel_open_direct_tcpip(
@@ -224,7 +224,7 @@ impl Handler for SshConnection {
         originator_port: u32,
         session: Session,
     ) -> Result<(Self, bool, Session), Self::Error> {
-        info!("channel_open_direct_tcpip channel={} host_to_connect={host_to_connect} port_to_connect={port_to_connect} originator_address={originator_address} originator_port={originator_port}", channel.id());
+        debug!("channel_open_direct_tcpip channel={} host_to_connect={host_to_connect} port_to_connect={port_to_connect} originator_address={originator_address} originator_port={originator_port}", channel.id());
         Ok((self, false, session))
     }
 
@@ -237,7 +237,7 @@ impl Handler for SshConnection {
         originator_port: u32,
         session: Session,
     ) -> Result<(Self, bool, Session), Self::Error> {
-        info!("channel_open_forwarded_tcpip channel={} host_to_connect={host_to_connect} port_to_connect={port_to_connect} originator_address={originator_address} originator_port={originator_port}", channel.id());
+        debug!("channel_open_forwarded_tcpip channel={} host_to_connect={host_to_connect} port_to_connect={port_to_connect} originator_address={originator_address} originator_port={originator_port}", channel.id());
         Ok((self, false, session))
     }
 
