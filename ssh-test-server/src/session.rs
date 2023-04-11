@@ -5,7 +5,7 @@ use russh::server::{Auth, Handler, Msg, Response, Session};
 use russh::{Channel, ChannelId, ChannelMsg, CryptoVec};
 use russh_keys::key::PublicKey;
 use std::mem;
-use tracing::{info, span, Level};
+use tracing::{debug, info};
 
 pub(crate) struct SshConnection {
     id: usize,
@@ -120,15 +120,13 @@ impl Handler for SshConnection {
         mut channel: Channel<Msg>,
         session: Session,
     ) -> Result<(Self, bool, Session), Self::Error> {
-        info!("channel_open_session channel={}", channel.id());
-        let handle = session.handle();
         let session_id = self.id;
+        info!(session_id, "channel_open_session channel={}", channel.id());
+        let handle = session.handle();
         let user = self.user.clone().unwrap();
         let users = self.users.clone();
         tokio::spawn(async move {
             let id = channel.id();
-            let span = span!(Level::INFO, "channel", id = id.to_string(), session_id);
-            let _enter = span.enter();
             let mut command_buf = vec![];
 
             while let Some(msg) = channel.wait().await {
@@ -142,20 +140,20 @@ impl Handler for SshConnection {
                         pix_height,
                         terminal_modes,
                     } => {
-                        info!("request-pty want_reply={want_reply} term={term} col/row={col_width}/{row_height} pix width/height={pix_width}/{pix_height} modes={terminal_modes:?}");
+                        debug!(session_id, "request-pty want_reply={want_reply} term={term} col/row={col_width}/{row_height} pix width/height={pix_width}/{pix_height} modes={terminal_modes:?}");
                         if want_reply {
                             handle.channel_success(id).await.unwrap();
                         }
                     }
                     ChannelMsg::RequestShell { want_reply } => {
-                        info!("request-shell want_reply={want_reply}");
+                        debug!(session_id, "request-shell want_reply={want_reply}");
                         if want_reply {
                             handle.channel_success(id).await.unwrap();
                         }
                         handle.data(id, CryptoVec::from_slice(b"$ ")).await.unwrap();
                     }
                     ChannelMsg::Data { data } => {
-                        info!("data={}", String::from_utf8_lossy(&data));
+                        debug!(session_id, "data={}", String::from_utf8_lossy(&data));
 
                         let mut stdout = CryptoVec::new();
                         for b in data.iter() {
@@ -184,7 +182,8 @@ impl Handler for SshConnection {
                         want_reply,
                         command,
                     } => {
-                        info!(
+                        debug!(
+                            session_id,
                             "exec want_reply={want_reply} command: {}",
                             String::from_utf8_lossy(&command)
                         );
@@ -196,11 +195,11 @@ impl Handler for SshConnection {
                         handle.close(id).await.unwrap();
                     }
                     _ => {
-                        info!("msg={msg:?}");
+                        debug!(session_id, "msg={msg:?}");
                     }
                 }
             }
-            info!("closed");
+            info!(session_id, "closed");
         });
 
         Ok((self, true, session))
@@ -243,7 +242,7 @@ impl Handler for SshConnection {
     }
 
     fn adjust_window(&mut self, channel: ChannelId, current: u32) -> u32 {
-        info!("adjust_window {channel} current={current}");
+        debug!("adjust_window {channel} current={current}");
         current
     }
 }
