@@ -5,10 +5,11 @@ use anyhow::Result;
 use rand::Rng;
 use russh::{server, MethodSet};
 use russh_keys::key::KeyPair;
-use std::sync::Arc;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::net::TcpListener;
-use tracing::{debug, info};
+use tracing::info;
 
 #[derive(Debug, Default)]
 pub struct SshServerBuilder {
@@ -66,27 +67,31 @@ impl SshServerBuilder {
         };
         config.keys.push(server_keys);
         let config = Arc::new(config);
+        let users: Arc<Mutex<HashMap<String, User>>> = Arc::new(Mutex::new(
+            self.users
+                .into_iter()
+                .map(|u| (u.login().to_string(), u))
+                .collect(),
+        ));
 
         let socket = TcpListener::bind(addr).await?;
+        let users2 = users.clone();
 
-        tokio::spawn(async move {
+        let listener = tokio::spawn(async move {
             let mut id = 0;
             while let Ok((socket, addr)) = socket.accept().await {
                 let config = config.clone();
                 info!("New connection from {addr:?}");
-                let s = SshConnection::new(id);
+                let s = SshConnection::new(id, users2.clone());
                 tokio::spawn(server::run_stream(config, socket, s));
                 id += 1;
             }
-            debug!("ssh server stopped");
+            info!("ssh server stopped");
         });
 
         Ok(SshServer {
-            users: self
-                .users
-                .into_iter()
-                .map(|u| (u.login().to_string(), u))
-                .collect(),
+            listener,
+            users,
             port,
             host,
             server_public_key,

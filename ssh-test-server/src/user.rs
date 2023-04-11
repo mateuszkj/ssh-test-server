@@ -30,4 +30,8 @@ impl User {
     pub fn password(&self) -> &str {
         &self.password
     }
+
+    pub fn set_password(&mut self, new_password: &str) {
+        self.password = new_password.to_string();
+    }
 }

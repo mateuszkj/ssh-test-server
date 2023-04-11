@@ -1,66 +1,25 @@
+use crate::{command, UsersMap};
 use anyhow::Result;
 use async_trait::async_trait;
-use russh::server::{Auth, Handle, Handler, Msg, Response, Session};
-use russh::{server, Channel, ChannelId, ChannelMsg, CryptoVec, Pty};
+use russh::server::{Auth, Handler, Msg, Response, Session};
+use russh::{Channel, ChannelId, ChannelMsg, CryptoVec};
 use russh_keys::key::PublicKey;
-use std::env::var;
 use std::mem;
-use tracing::{debug, info, span, Level};
+use tracing::{info, span, Level};
 
 pub(crate) struct SshConnection {
-    command: Vec<u8>,
     id: usize,
+    users: UsersMap,
+    user: Option<String>,
 }
 
 impl SshConnection {
-    pub fn new(id: usize) -> Self {
+    pub fn new(id: usize, users: UsersMap) -> Self {
         Self {
-            command: vec![],
             id,
+            users,
+            user: None,
         }
-    }
-}
-
-async fn send_stderr(channel: ChannelId, handle: &Handle, msg: &str) {
-    let mut stderr = CryptoVec::from_slice(msg.as_bytes());
-    stderr.push(b'\n');
-    stderr.push(b'\r');
-    handle.extended_data(channel, 1, stderr).await.unwrap();
-}
-
-async fn send_stdout(channel: ChannelId, handle: &Handle, msg: &str) {
-    let mut stdout = CryptoVec::from_slice(msg.as_bytes());
-    stdout.push(b'\n');
-    stdout.push(b'\r');
-    handle.data(channel, stdout).await.unwrap();
-}
-
-async fn execute_command(command: Vec<u8>, channel: ChannelId, handle: Handle) {
-    let cmd = String::from_utf8_lossy(&command);
-    let mut cmdline = cmd.to_string();
-    let mut parse = cmdline_words_parser::parse_posix(&mut cmdline);
-    let Some(program) =  parse.next() else {
-        // just enter
-        return;
-    };
-    let args: Vec<_> = parse.collect();
-
-    info!("command: {cmd}, program {program} args: {args:?}");
-
-    if program == "echo" {
-        let mut stdout = String::new();
-        for a in args {
-            stdout.push_str(a);
-        }
-        send_stdout(channel, &handle, &stdout).await;
-        handle.exit_status_request(channel, 0).await.unwrap();
-    } else if program == "exit" {
-        handle.exit_status_request(channel, 0).await.unwrap();
-        handle.close(channel).await.unwrap();
-    } else {
-        let msg = format!("{program}: command not found");
-        send_stderr(channel, &handle, &msg).await;
-        handle.exit_status_request(channel, 127).await.unwrap();
     }
 }
 
@@ -78,9 +37,29 @@ impl Handler for SshConnection {
         ))
     }
 
-    async fn auth_password(self, user: &str, password: &str) -> Result<(Self, Auth), Self::Error> {
-        info!("auth_password user={user} password={password}");
-        Ok((self, Auth::Accept))
+    async fn auth_password(
+        mut self,
+        user: &str,
+        password: &str,
+    ) -> Result<(Self, Auth), Self::Error> {
+        let users = self.users.lock().unwrap();
+        if let Some(u) = users.get(user) {
+            if password == u.password() {
+                self.user = Some(u.login().to_string());
+                drop(users);
+                info!("auth_password user={user} password={password} Accepted");
+                return Ok((self, Auth::Accept));
+            }
+        }
+
+        drop(users);
+        info!("auth_password user={user} password={password} Rejected");
+        Ok((
+            self,
+            Auth::Reject {
+                proceed_with_methods: None,
+            },
+        ))
     }
 
     async fn auth_publickey(
@@ -143,26 +122,82 @@ impl Handler for SshConnection {
     ) -> Result<(Self, bool, Session), Self::Error> {
         info!("channel_open_session channel={}", channel.id());
         let handle = session.handle();
-
+        let session_id = self.id;
+        let user = self.user.clone().unwrap();
+        let users = self.users.clone();
         tokio::spawn(async move {
             let id = channel.id();
-            let span = span!(Level::INFO, "channel", id = id.to_string());
+            let span = span!(Level::INFO, "channel", id = id.to_string(), session_id);
             let _enter = span.enter();
+            let mut command_buf = vec![];
 
             while let Some(msg) = channel.wait().await {
-                info!("msg={msg:?}");
                 match msg {
-                    ChannelMsg::RequestPty { want_reply, .. } => {
+                    ChannelMsg::RequestPty {
+                        want_reply,
+                        term,
+                        col_width,
+                        row_height,
+                        pix_width,
+                        pix_height,
+                        terminal_modes,
+                    } => {
+                        info!("request-pty want_reply={want_reply} term={term} col/row={col_width}/{row_height} pix width/height={pix_width}/{pix_height} modes={terminal_modes:?}");
                         if want_reply {
                             handle.channel_success(id).await.unwrap();
                         }
                     }
-                    ChannelMsg::RequestShell { want_reply, .. } => {
+                    ChannelMsg::RequestShell { want_reply } => {
+                        info!("request-shell want_reply={want_reply}");
                         if want_reply {
                             handle.channel_success(id).await.unwrap();
                         }
+                        handle.data(id, CryptoVec::from_slice(b"$ ")).await.unwrap();
                     }
-                    _ => {}
+                    ChannelMsg::Data { data } => {
+                        info!("data={}", String::from_utf8_lossy(&data));
+
+                        let mut stdout = CryptoVec::new();
+                        for b in data.iter() {
+                            if *b == 0x03 {
+                                // Ctrl + C
+                                handle.exit_status_request(id, 130).await.unwrap();
+                                handle.close(id).await.unwrap();
+                            } else if *b == b'\r' || *b == b'\n' {
+                                stdout.push(b'\n');
+                                stdout.push(b'\r');
+                                handle.data(id, mem::take(&mut stdout)).await.unwrap();
+                                let cmd = mem::take(&mut command_buf);
+                                command::execute_command(cmd, id, &handle, &user, &users).await;
+                                handle.data(id, CryptoVec::from_slice(b"$ ")).await.unwrap();
+                            } else {
+                                command_buf.push(*b);
+                                stdout.push(*b);
+                            }
+                        }
+
+                        if !stdout.is_empty() {
+                            handle.data(id, mem::take(&mut stdout)).await.unwrap();
+                        }
+                    }
+                    ChannelMsg::Exec {
+                        want_reply,
+                        command,
+                    } => {
+                        info!(
+                            "exec want_reply={want_reply} command: {}",
+                            String::from_utf8_lossy(&command)
+                        );
+                        if want_reply {
+                            handle.channel_success(id).await.unwrap();
+                        }
+
+                        command::execute_command(command, id, &handle, &user, &users).await;
+                        handle.close(id).await.unwrap();
+                    }
+                    _ => {
+                        info!("msg={msg:?}");
+                    }
                 }
             }
             info!("closed");
@@ -207,67 +242,8 @@ impl Handler for SshConnection {
         Ok((self, false, session))
     }
 
-    async fn data(
-        mut self,
-        channel: ChannelId,
-        data: &[u8],
-        mut session: Session,
-    ) -> Result<(Self, Session), Self::Error> {
-        debug!(
-            "server channel: {channel:?} data = {:?} id={}",
-            std::str::from_utf8(data),
-            self.id,
-        );
-
-        let mut stdout = CryptoVec::new();
-        for b in data {
-            if *b == 0x03 {
-                // Ctrl + C
-                session.exit_status_request(channel, 130);
-                session.close(channel);
-            } else if *b == b'\r' || *b == b'\n' {
-                stdout.push(b'\n');
-                stdout.push(b'\r');
-                session.data(channel, mem::take(&mut stdout));
-                let cmd = mem::take(&mut self.command);
-                let handle = session.handle();
-                execute_command(cmd, channel, handle).await;
-            } else {
-                self.command.push(*b);
-                stdout.push(*b);
-            }
-        }
-
-        if !stdout.is_empty() {
-            session.data(channel, mem::take(&mut stdout));
-        }
-        Ok((self, session))
-    }
-
     fn adjust_window(&mut self, channel: ChannelId, current: u32) -> u32 {
         info!("adjust_window {channel} current={current}");
         current
-    }
-
-    async fn exec_request(
-        self,
-        channel: ChannelId,
-        data: &[u8],
-        session: Session,
-    ) -> Result<(Self, Session), Self::Error> {
-        info!(
-            "exec_request channel: {channel:?} data = {:?} id={}",
-            std::str::from_utf8(data),
-            self.id,
-        );
-
-        let cmd = data.to_vec();
-        let handle = session.handle();
-        execute_command(cmd, channel, handle).await;
-        let handle = session.handle();
-        handle.channel_success(channel).await.unwrap();
-        handle.close(channel).await.unwrap();
-
-        Ok((self, session))
     }
 }
