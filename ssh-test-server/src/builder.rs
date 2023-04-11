@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::net::TcpListener;
-use tracing::info;
+use tracing::debug;
 
 #[derive(Debug, Default)]
 pub struct SshServerBuilder {
@@ -81,12 +81,12 @@ impl SshServerBuilder {
             let mut id = 0;
             while let Ok((socket, addr)) = socket.accept().await {
                 let config = config.clone();
-                info!("New connection from {addr:?}");
+                debug!("New connection from {addr:?}");
                 let s = SshConnection::new(id, users2.clone());
                 tokio::spawn(server::run_stream(config, socket, s));
                 id += 1;
             }
-            info!("ssh server stopped");
+            debug!("ssh server stopped");
         });
 
         Ok(SshServer {

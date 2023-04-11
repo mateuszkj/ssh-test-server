@@ -1,7 +1,7 @@
 use crate::UsersMap;
 use russh::server::Handle;
 use russh::{ChannelId, CryptoVec};
-use tracing::info;
+use tracing::debug;
 
 async fn send_stderr(channel: ChannelId, handle: &Handle, msg: &str) {
     let mut stderr = CryptoVec::from_slice(msg.as_bytes());
@@ -33,7 +33,7 @@ pub async fn execute_command(
     };
     let args: Vec<_> = parse.collect();
 
-    info!("command: {cmd}, program {program} args: {args:?}");
+    debug!("command: {cmd}, program {program} args: {args:?}");
 
     if program == "echo" {
         let mut stdout = String::new();
