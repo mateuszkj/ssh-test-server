@@ -13,25 +13,24 @@ categories = ["development-tools::testing"]
 
 
 [dependencies]
-anyhow = "1.0.70"
-russh = { git = "https://github.com/warp-tech/russh.git" }
-russh-keys = { git = "https://github.com/warp-tech/russh.git" }
+anyhow = "1.0.71"
+russh = "0.38.0-beta.1"
+russh-keys = "0.37.1"
 futures = "0.3.28"
-tokio = "1.27.0"
+tokio = "1.29.1"
 tracing = "0.1.37"
 cmdline_words_parser = "0.2.1"
-async-trait = "0.1.68"
+async-trait = "0.1.71"
 portpicker = "0.1"
 rand = "0.8"
 
 
 [dev-dependencies]
-tokio = { version = "1.26.0", features = ["rt-multi-thread", "macros"] }
+tokio = { version = "1.29.1", features = ["rt-multi-thread", "macros"] }
 tracing-test = "0.2.4"
 t-ssh-client = "0.2.1"
 ssh2 = "0.9.4"
-#cucumber = "0.19.1"
-cucumber = { git = "https://github.com/cucumber-rs/cucumber.git", features = ["tracing"]}
+cucumber = { version = "0.20.0", features = ["tracing"] }
 timeout-readwrite = "0.3.3"
 
 

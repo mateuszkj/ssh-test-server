@@ -15,6 +15,12 @@ impl User {
         }
     }
 
+    pub fn new_admin<L: Into<String>, P: Into<String>>(login: L, password: P) -> Self {
+        let mut u = Self::new(login, password);
+        u.set_admin(true);
+        u
+    }
+
     pub fn set_admin(&mut self, admin: bool) {
         self.admin = admin;
     }

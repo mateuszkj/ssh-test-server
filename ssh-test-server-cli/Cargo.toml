@@ -13,11 +13,11 @@ categories = ["development-tools::testing"]
 
 
 [dependencies]
-anyhow = "1.0.70"
-tokio = { version = "1.26.0", features = ["rt-multi-thread", "macros", "signal", "fs"] }
+anyhow = "1.0.71"
+tokio = { version = "1.29.1", features = ["rt-multi-thread", "macros", "signal", "fs"] }
 tracing = "0.1.37"
-tracing-subscriber = { version = "0.3.16", features = ["env-filter", "tracing-log"] }
-clap = { version = "4.1.14", features = ["derive"] }
+tracing-subscriber = { version = "0.3.17", features = ["env-filter", "tracing-log"] }
+clap = { version = "4.3.11", features = ["derive"] }
 ssh-test-server = { path = "../ssh-test-server" }
 
 
