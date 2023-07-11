@@ -106,15 +106,6 @@ impl Handler for SshConnection {
         Ok((self, session))
     }
 
-    async fn channel_eof(
-        self,
-        channel: ChannelId,
-        session: Session,
-    ) -> Result<(Self, Session), Self::Error> {
-        debug!("channel_eof channel={channel}");
-        Handler::channel_eof(self, channel, session).await
-    }
-
     async fn channel_open_session(
         self,
         mut channel: Channel<Msg>,
