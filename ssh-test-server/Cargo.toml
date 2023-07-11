@@ -14,8 +14,8 @@ categories = ["development-tools::testing"]
 
 [dependencies]
 anyhow = "1.0.71"
-russh = "0.38.0-beta.1"
-russh-keys = "0.37.1"
+russh = { git = "https://github.com/warp-tech/russh.git" }
+russh-keys = { git = "https://github.com/warp-tech/russh.git" }
 futures = "0.3.28"
 tokio = "1.29.1"
 tracing = "0.1.37"
