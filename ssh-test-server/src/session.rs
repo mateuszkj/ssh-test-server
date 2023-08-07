@@ -1,24 +1,30 @@
-use crate::{command, UsersMap};
+use crate::{command, SshExecuteHandler, UsersMap};
 use anyhow::Result;
 use async_trait::async_trait;
 use russh::server::{Auth, Handler, Msg, Response, Session};
 use russh::{Channel, ChannelId, ChannelMsg, CryptoVec};
 use russh_keys::key::PublicKey;
+use std::collections::HashMap;
 use std::mem;
+use std::sync::Arc;
 use tracing::debug;
+
+pub type ProgramsMap = Arc<HashMap<String, Box<SshExecuteHandler>>>;
 
 pub(crate) struct SshConnection {
     id: usize,
     users: UsersMap,
     user: Option<String>,
+    programs: ProgramsMap,
 }
 
 impl SshConnection {
-    pub fn new(id: usize, users: UsersMap) -> Self {
+    pub fn new(id: usize, users: UsersMap, programs: ProgramsMap) -> Self {
         Self {
             id,
             users,
             user: None,
+            programs,
         }
     }
 }
@@ -116,6 +122,7 @@ impl Handler for SshConnection {
         let handle = session.handle();
         let user = self.user.clone().unwrap();
         let users = self.users.clone();
+        let programs = self.programs.clone();
         tokio::spawn(async move {
             let id = channel.id();
             let mut command_buf = vec![];
@@ -157,7 +164,10 @@ impl Handler for SshConnection {
                                 stdout.push(b'\n');
                                 handle.data(id, mem::take(&mut stdout)).await.unwrap();
                                 let cmd = mem::take(&mut command_buf);
-                                command::execute_command(cmd, id, &handle, &user, &users).await;
+                                command::execute_command(
+                                    cmd, id, &handle, &user, &users, &programs,
+                                )
+                                .await;
                                 handle.data(id, CryptoVec::from_slice(b"$ ")).await.unwrap();
                             } else {
                                 command_buf.push(*b);
@@ -182,7 +192,8 @@ impl Handler for SshConnection {
                             handle.channel_success(id).await.unwrap();
                         }
 
-                        command::execute_command(command, id, &handle, &user, &users).await;
+                        command::execute_command(command, id, &handle, &user, &users, &programs)
+                            .await;
                         handle.close(id).await.unwrap();
                     }
                     _ => {

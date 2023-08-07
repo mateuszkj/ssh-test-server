@@ -9,8 +9,50 @@ pub mod builder;
 mod command;
 mod session;
 pub mod user;
-
 pub type UsersMap = Arc<Mutex<HashMap<String, User>>>;
+
+pub type SshExecuteHandler =
+    dyn Fn(&SshExecuteContext, &str, &[&str]) -> SshExecuteResult + Sync + Send;
+
+pub struct SshExecuteContext<'a> {
+    pub users: &'a UsersMap,
+    pub current_user: &'a str,
+}
+
+impl<'a> SshExecuteContext<'a> {
+    pub fn current_admin(&self) -> bool {
+        self.users
+            .lock()
+            .unwrap()
+            .get(self.current_user)
+            .map(|u| u.admin())
+            .unwrap_or(false)
+    }
+}
+
+pub struct SshExecuteResult {
+    pub stdout: String,
+    pub stderr: String,
+    pub status_code: u32,
+}
+
+impl SshExecuteResult {
+    pub fn stdout(status_code: u32, stdout: impl Into<String>) -> Self {
+        Self {
+            stdout: stdout.into(),
+            stderr: "".to_string(),
+            status_code,
+        }
+    }
+
+    pub fn stderr(status_code: u32, stderr: impl Into<String>) -> Self {
+        Self {
+            stdout: "".to_string(),
+            stderr: stderr.into(),
+            status_code,
+        }
+    }
+}
 
 /// Running SSH server
 #[derive(Debug)]

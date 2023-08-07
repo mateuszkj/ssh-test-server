@@ -1,3 +1,4 @@
+#![allow(unused)]
 use ssh2::{Channel, Session};
 use std::io::{Read, Write};
 use tracing::info;

@@ -1,6 +1,6 @@
 use crate::session::SshConnection;
 use crate::user::User;
-use crate::SshServer;
+use crate::{SshExecuteHandler, SshServer};
 use anyhow::Result;
 use rand::Rng;
 use russh::{server, MethodSet};
@@ -11,11 +11,12 @@ use std::time::Duration;
 use tokio::net::TcpListener;
 use tracing::debug;
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct SshServerBuilder {
     port: Option<u16>,
     bind_addr: Option<String>,
     users: Vec<User>,
+    programs: HashMap<String, Box<SshExecuteHandler>>,
 }
 
 impl SshServerBuilder {
@@ -28,6 +29,11 @@ impl SshServerBuilder {
         for u in users {
             self.users.push(u.clone());
         }
+        self
+    }
+
+    pub fn add_program(mut self, program: &str, handler: Box<SshExecuteHandler>) -> Self {
+        self.programs.insert(program.to_string(), handler);
         self
     }
 
@@ -78,11 +84,12 @@ impl SshServerBuilder {
         let users2 = users.clone();
 
         let listener = tokio::spawn(async move {
+            let programs = Arc::new(self.programs);
             let mut id = 0;
             while let Ok((socket, addr)) = socket.accept().await {
                 let config = config.clone();
                 debug!("New connection from {addr:?}");
-                let s = SshConnection::new(id, users2.clone());
+                let s = SshConnection::new(id, users2.clone(), programs.clone());
                 tokio::spawn(server::run_stream(config, socket, s));
                 id += 1;
             }

@@ -21,6 +21,7 @@ test:
   stage: test
   image: "rustdocker/rust:stable"
   script:
+    - apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends librust-libsodium-sys-dev
     - cargo fmt -- --check
     - cargo verify-project
     - cargo clippy --all-features --tests -- -D warnings

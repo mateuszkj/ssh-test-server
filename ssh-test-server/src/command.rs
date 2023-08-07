@@ -1,4 +1,5 @@
-use crate::UsersMap;
+use crate::session::ProgramsMap;
+use crate::{SshExecuteContext, UsersMap};
 use russh::server::Handle;
 use russh::{ChannelId, CryptoVec};
 use tracing::debug;
@@ -23,6 +24,7 @@ pub async fn execute_command(
     handle: &Handle,
     session_user: &str,
     users: &UsersMap,
+    programs: &ProgramsMap,
 ) {
     let cmd = String::from_utf8_lossy(&command);
     let mut cmdline = cmd.to_string();
@@ -35,7 +37,26 @@ pub async fn execute_command(
 
     debug!("command: {cmd}, program {program} args: {args:?}");
 
-    if program == "echo" {
+    if let Some(handler) = programs.get(program) {
+        let context = SshExecuteContext {
+            users,
+            current_user: session_user,
+        };
+
+        let r = handler(&context, program, &args);
+
+        if !r.stderr.is_empty() {
+            send_stderr(channel, handle, &r.stderr).await;
+        }
+        if !r.stdout.is_empty() {
+            send_stdout(channel, handle, &r.stdout).await;
+        }
+
+        handle
+            .exit_status_request(channel, r.status_code)
+            .await
+            .unwrap();
+    } else if program == "echo" {
         let mut stdout = String::new();
         for a in args {
             stdout.push_str(a);
