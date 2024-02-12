@@ -4,6 +4,7 @@ use crate::{SshExecuteHandler, SshServer};
 use anyhow::Result;
 use rand::Rng;
 use russh::{server, MethodSet};
+use russh_keys::key;
 use russh_keys::key::KeyPair;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -71,6 +72,7 @@ impl SshServerBuilder {
             auth_rejection_time: Duration::from_secs(0),
             ..Default::default()
         };
+        config.preferred.key = &[key::ED25519];
         config.keys.push(server_keys);
         let config = Arc::new(config);
         let users: Arc<Mutex<HashMap<String, User>>> = Arc::new(Mutex::new(
