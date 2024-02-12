@@ -29,7 +29,7 @@ pub async fn execute_command(
     let cmd = String::from_utf8_lossy(&command);
     let mut cmdline = cmd.to_string();
     let mut parse = cmdline_words_parser::parse_posix(&mut cmdline);
-    let Some(program) =  parse.next() else {
+    let Some(program) = parse.next() else {
         // just enter
         return;
     };

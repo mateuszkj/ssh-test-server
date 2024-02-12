@@ -33,90 +33,74 @@ impl SshConnection {
 impl Handler for SshConnection {
     type Error = anyhow::Error;
 
-    async fn auth_none(self, user: &str) -> Result<(Self, Auth), Self::Error> {
+    async fn auth_none(&mut self, user: &str) -> Result<Auth, Self::Error> {
         debug!("auth_none user={user}");
-        Ok((
-            self,
-            Auth::Reject {
-                proceed_with_methods: None,
-            },
-        ))
+        Ok(Auth::Reject {
+            proceed_with_methods: None,
+        })
     }
 
-    async fn auth_password(
-        mut self,
-        user: &str,
-        password: &str,
-    ) -> Result<(Self, Auth), Self::Error> {
+    async fn auth_password(&mut self, user: &str, password: &str) -> Result<Auth, Self::Error> {
         let users = self.users.lock().unwrap();
         if let Some(u) = users.get(user) {
             if password == u.password() {
                 self.user = Some(u.login().to_string());
                 drop(users);
                 debug!("auth_password user={user} password={password} Accepted");
-                return Ok((self, Auth::Accept));
+                return Ok(Auth::Accept);
             }
         }
 
         drop(users);
         debug!("auth_password user={user} password={password} Rejected");
-        Ok((
-            self,
-            Auth::Reject {
-                proceed_with_methods: None,
-            },
-        ))
+        Ok(Auth::Reject {
+            proceed_with_methods: None,
+        })
     }
 
     async fn auth_publickey(
-        self,
+        &mut self,
         user: &str,
         public_key: &PublicKey,
-    ) -> Result<(Self, Auth), Self::Error> {
+    ) -> Result<Auth, Self::Error> {
         debug!("auth_publickey user={user} public_key={public_key:?}");
 
-        Ok((
-            self,
-            Auth::Reject {
-                proceed_with_methods: None,
-            },
-        ))
+        Ok(Auth::Reject {
+            proceed_with_methods: None,
+        })
     }
 
     async fn auth_keyboard_interactive(
-        self,
+        &mut self,
         user: &str,
         submethods: &str,
         _response: Option<Response<'async_trait>>,
-    ) -> Result<(Self, Auth), Self::Error> {
+    ) -> Result<Auth, Self::Error> {
         debug!("auth_keyboard_interactive user={user} submethods={submethods:?}");
-        Ok((
-            self,
-            Auth::Reject {
-                proceed_with_methods: None,
-            },
-        ))
+        Ok(Auth::Reject {
+            proceed_with_methods: None,
+        })
     }
 
-    async fn auth_succeeded(self, session: Session) -> Result<(Self, Session), Self::Error> {
+    async fn auth_succeeded(&mut self, _session: &mut Session) -> Result<(), Self::Error> {
         debug!("auth_succeeded");
-        Ok((self, session))
+        Ok(())
     }
 
     async fn channel_close(
-        self,
+        &mut self,
         channel: ChannelId,
-        session: Session,
-    ) -> Result<(Self, Session), Self::Error> {
+        _session: &mut Session,
+    ) -> Result<(), Self::Error> {
         debug!("channel_close channel={channel}");
-        Ok((self, session))
+        Ok(())
     }
 
     async fn channel_open_session(
-        self,
+        &mut self,
         mut channel: Channel<Msg>,
-        session: Session,
-    ) -> Result<(Self, bool, Session), Self::Error> {
+        session: &mut Session,
+    ) -> Result<bool, Self::Error> {
         let session_id = self.id;
         debug!(session_id, "channel_open_session channel={}", channel.id());
         let handle = session.handle();
@@ -204,43 +188,44 @@ impl Handler for SshConnection {
             debug!(session_id, "closed");
         });
 
-        Ok((self, true, session))
+        Ok(true)
     }
 
     async fn channel_open_x11(
-        self,
+        &mut self,
         channel: Channel<Msg>,
         originator_address: &str,
         originator_port: u32,
-        session: Session,
-    ) -> Result<(Self, bool, Session), Self::Error> {
+        _session: &mut Session,
+    ) -> Result<bool, Self::Error> {
         debug!("channel_open_x11 channel={} originator_address={originator_address} originator_port={originator_port}", channel.id());
-        Ok((self, false, session))
+        Ok(false)
     }
+
     async fn channel_open_direct_tcpip(
-        self,
+        &mut self,
         channel: Channel<Msg>,
         host_to_connect: &str,
         port_to_connect: u32,
         originator_address: &str,
         originator_port: u32,
-        session: Session,
-    ) -> Result<(Self, bool, Session), Self::Error> {
+        _session: &mut Session,
+    ) -> Result<bool, Self::Error> {
         debug!("channel_open_direct_tcpip channel={} host_to_connect={host_to_connect} port_to_connect={port_to_connect} originator_address={originator_address} originator_port={originator_port}", channel.id());
-        Ok((self, false, session))
+        Ok(false)
     }
 
     async fn channel_open_forwarded_tcpip(
-        self,
+        &mut self,
         channel: Channel<Msg>,
         host_to_connect: &str,
         port_to_connect: u32,
         originator_address: &str,
         originator_port: u32,
-        session: Session,
-    ) -> Result<(Self, bool, Session), Self::Error> {
+        _session: &mut Session,
+    ) -> Result<bool, Self::Error> {
         debug!("channel_open_forwarded_tcpip channel={} host_to_connect={host_to_connect} port_to_connect={port_to_connect} originator_address={originator_address} originator_port={originator_port}", channel.id());
-        Ok((self, false, session))
+        Ok(false)
     }
 
     fn adjust_window(&mut self, channel: ChannelId, current: u32) -> u32 {

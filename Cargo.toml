@@ -7,6 +7,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://gitlab.com/mateuszkj/ssh-test-server"
 
 [workspace]
+resolver = "2"
 members = [
   "ssh-test-server",
   "ssh-test-server-cli"

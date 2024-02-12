@@ -1,7 +1,6 @@
 use ssh_test_server::builder::SshServerBuilder;
 use ssh_test_server::user::User;
 use ssh_test_server::{SshExecuteContext, SshExecuteResult};
-
 mod common;
 
 const USER_LOGIN: &str = "user1";
