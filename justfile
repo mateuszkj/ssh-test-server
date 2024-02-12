@@ -13,3 +13,7 @@ lint: check
 # Run tests
 test:
 	cargo test
+
+# Run ssh server
+server:
+	RUST_LOG=trace cargo run -p ssh-test-server-cli
