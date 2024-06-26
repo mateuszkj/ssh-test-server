@@ -13,8 +13,8 @@ categories = ["development-tools::testing"]
 
 [dependencies]
 anyhow = "1"
-russh = "0.43.0-beta.1"
-russh-keys = "0.42.0"
+russh = "0.43"
+russh-keys = "0.43"
 
 futures = "0.3"
 tokio = "1"
@@ -30,7 +30,7 @@ tokio = { version = "1.36.0", features = ["rt-multi-thread", "macros"] }
 tracing-test = "0.2.4"
 t-ssh-client = "0.2.1"
 ssh2 = "0.9.4"
-cucumber = { version = "0.20.2", features = ["tracing"] }
+cucumber = { version = "0.21.1", features = ["tracing"] }
 timeout-readwrite = "0.3.3"
 
 
