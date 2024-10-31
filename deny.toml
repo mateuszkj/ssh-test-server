@@ -1,11 +1,15 @@
 [advisories]
 
+ignore = [
+    # Marvin Attack: potential key recovery through timing sidechannels
+    { id = "RUSTSEC-2023-0071", reason = "There is no workaround https://github.com/Eugeny/russh/issues/337." }
+]
+
 [licenses]
 allow = [
     "Apache-2.0",
     "BSD-3-Clause",
     "MIT",
-    "MPL-2.0",
     "Unicode-DFS-2016",
     "Zlib",
 ]
