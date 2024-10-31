@@ -59,7 +59,7 @@ impl SshServerBuilder {
             .unwrap_or_else(|| "127.0.0.1".to_string());
 
         let port = self.port.unwrap_or_else(|| {
-            PortPicker::new().pick().unwrap_or_else(|_| {
+            PortPicker::new().random(true).pick().unwrap_or_else(|_| {
                 let mut rng = rand::thread_rng();
                 rng.gen_range(15000..55000)
             })

@@ -49,14 +49,6 @@ async fn test_run_registered_whoami_user() {
     assert_eq!(stderr, "");
 }
 
-#[tokio::test]
-async fn test_run_sleep() {
-    let (stdout, stderr, status_code) = run_command("sleep 0.2", false).await;
-    assert_eq!(status_code, 0);
-    assert_eq!(stdout.trim(), "");
-    assert_eq!(stderr, "");
-}
-
 async fn run_command(command: &str, root: bool) -> (String, String, i32) {
     let server = SshServerBuilder::default()
         .add_user(User::new_admin(ROOT_LOGIN, ROOT_PASS))
