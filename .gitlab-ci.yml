@@ -25,7 +25,8 @@ test:
     - rustup component add rustfmt
     - cargo fmt -- --check
     - cargo verify-project
-    - cargo install cargo-sort cargo-sort-derives typos-cli
+    - cargo install cargo-sort-derives typos-cli
+    - cargo install --git https://github.com/DevinR528/cargo-sort.git
     - cargo sort -w -c
     - cargo sort-derives --check
     - typos
