@@ -11,13 +11,12 @@ repository.workspace = true
 keywords = ["ssh", "test"]
 categories = ["development-tools::testing"]
 
-
 [dependencies]
-anyhow = "1.0.79"
-tokio = { version = "1.36.0", features = ["rt-multi-thread", "macros", "signal", "fs"] }
-tracing = "0.1.40"
-tracing-subscriber = { version = "0.3.18", features = ["env-filter", "tracing-log"] }
-clap = { version = "4.5.0", features = ["derive"] }
+anyhow = "1.0.91"
+clap = { version = "4.0.32", features = ["derive"] }
 ssh-test-server = { path = "../ssh-test-server" }
+tokio = { version = "1.29.1", features = ["rt-multi-thread", "macros", "signal", "fs"] }
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.17", features = ["env-filter", "tracing-log"] }
 
 

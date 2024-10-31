@@ -7,7 +7,7 @@ use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
 /// Run OpenLDAP server
-#[derive(Parser, Debug)]
+#[derive(Debug, Parser)]
 #[command(author, version, about, long_about = None)]
 struct Args {
     /// Bind server on address

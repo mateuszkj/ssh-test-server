@@ -8,8 +8,5 @@ repository = "https://gitlab.com/mateuszkj/ssh-test-server"
 
 [workspace]
 resolver = "2"
-members = [
-  "ssh-test-server",
-  "ssh-test-server-cli"
-]
+members = ["ssh-test-server", "ssh-test-server-cli"]
 

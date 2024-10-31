@@ -1,5 +1,5 @@
 /// Ssh user
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug)]
 pub struct User {
     login: String,
     password: String,

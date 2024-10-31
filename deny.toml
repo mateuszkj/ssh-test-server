@@ -1,0 +1,22 @@
+[advisories]
+
+[licenses]
+allow = [
+    "Apache-2.0",
+    "BSD-3-Clause",
+    "MIT",
+    "MPL-2.0",
+    "Unicode-DFS-2016",
+    "Zlib",
+]
+confidence-threshold = 1.0
+
+[bans]
+multiple-versions = "allow"
+# I'd rather have this be "deny", but the workspace dependences are
+# falsely reports as a wildcard. (See hhttps://github.com/EmbarkStudios/cargo-deny/issues/241.)
+wildcards = "allow"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

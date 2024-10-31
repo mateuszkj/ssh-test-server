@@ -1,14 +1,25 @@
 default:
 	@just --list --justfile {{justfile()}}
 
-# Rust cargo check
-check:
-	cargo check --tests
+# Install development dependences.
+install-dev:
+    cargo install --locked cargo-llvm-cov cargo-mutants cargo-deny cargo-edit cargo-sort cargo-sort-derives typos-cli
+
+# Run formatter.
+fmt:
+    cargo fmt
+    cargo sort -w
+    cargo sort-derives
+
 
 # Run fmt and clippy
-lint: check
-	cargo fmt
-	cargo clippy --tests -- -D warnings
+lint: fmt
+    cargo check --tests
+    typos
+    cargo clippy -- -D warnings
+    cargo clippy --tests -- -D warnings
+    cargo deny check
+
 
 # Run tests
 test:
