@@ -29,7 +29,7 @@ test:
     - cargo install --git https://github.com/DevinR528/cargo-sort.git
     - cargo sort -w -c
     - cargo sort-derives --check
-    - typos
+    - .cargo/bin/typos
     - cargo clippy --all-features --tests -- -D warnings
     - cargo build --all-features --release
     - cargo test --all-features --release --verbose
