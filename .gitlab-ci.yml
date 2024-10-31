@@ -19,11 +19,16 @@ default:
 
 test:
   stage: test
-  image: "rustdocker/rust:stable"
+  image: "rust:1.82.0"
   script:
     - apt update && DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends librust-libsodium-sys-dev
+    - rustup component add rustfmt
     - cargo fmt -- --check
     - cargo verify-project
+    - cargo install cargo-sort cargo-sort-derives typos-cli
+    - cargo sort -w -c
+    - cargo sort-derives --check
+    - typos
     - cargo clippy --all-features --tests -- -D warnings
     - cargo build --all-features --release
     - cargo test --all-features --release --verbose
