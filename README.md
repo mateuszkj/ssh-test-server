@@ -1,4 +1,4 @@
-# In memory ssh server.
+# In memory ssh server
 
 `ssh-test-server` provides ssh server to that can be used in integration testing.
 
