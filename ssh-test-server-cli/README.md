@@ -1,8 +1,18 @@
-# In memory ssh server
+# In memory ssh server cli
 
-[Crate for running integration tests](./ssh-test-server/README.md)
+`ssh-test-server-cli` is a in memory ssh server to that can be used in integration testing.
 
-[Command line tools for starting server](./ssh-test-server-cli/README.md)
+## Installation
+
+```shell
+cargo install ssh-test-server-cli
+```
+
+## Usage
+
+```shell
+RUST_LOG=trace cargo run -p ssh-test-server-cli
+```
 
 ## Contributions
 
