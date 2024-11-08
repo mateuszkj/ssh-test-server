@@ -12,7 +12,6 @@ keywords = ["ssh", "test"]
 categories = ["development-tools::testing"]
 
 [dependencies]
-anyhow = "1.0.91"
 clap = { version = "4.0.32", features = ["derive"] }
 ssh-test-server = { path = "../ssh-test-server" }
 tokio = { version = "1.29.1", features = ["rt-multi-thread", "macros", "signal", "fs"] }
