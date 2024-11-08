@@ -66,8 +66,8 @@ impl SshServerBuilder {
         });
         let addr = format!("{host}:{port}");
 
-        let server_keys = KeyPair::generate_ed25519().unwrap();
-        let server_public_key = server_keys.clone_public_key().unwrap();
+        let server_keys = KeyPair::generate_ed25519();
+        let server_public_key = server_keys.clone_public_key()?;
 
         let mut config = server::Config {
             methods: MethodSet::PASSWORD,

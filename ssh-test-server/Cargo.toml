@@ -18,8 +18,8 @@ cmdline_words_parser = "0.2"
 
 rand = "0.8"
 random-port = "0.1"
-russh = "0.45.0"
-russh-keys = "0.45.0"
+russh = "0.46.0"
+russh-keys = "0.46.0"
 tokio = "1"
 tracing = "0.1"
 
