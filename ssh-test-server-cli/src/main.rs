@@ -1,6 +1,5 @@
 use clap::{arg, Parser};
-use ssh_test_server::builder::SshServerBuilder;
-use ssh_test_server::user::User;
+use ssh_test_server::{SshServerBuilder, User};
 use tokio::signal;
 use tracing::info;
 use tracing::level_filters::LevelFilter;

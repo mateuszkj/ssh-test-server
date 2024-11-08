@@ -14,6 +14,22 @@ use std::time::Duration;
 use tokio::net::TcpListener;
 use tracing::debug;
 
+/// Builder for the ssh server.
+///
+/// # Example
+///
+/// ```
+/// use ssh_test_server::{SshServerBuilder, User};
+///
+/// # #[tokio::main(flavor = "current_thread")]
+/// # async fn main() {
+/// let _ssh = SshServerBuilder::default()
+///     .add_user(User::new_admin("root", "pass123"))
+///     .run()
+///     .await
+///     .unwrap();
+/// # }
+/// ```
 #[derive(Default)]
 pub struct SshServerBuilder {
     port: Option<u16>,
@@ -23,11 +39,42 @@ pub struct SshServerBuilder {
 }
 
 impl SshServerBuilder {
+    /// Add a user to ssh server.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use ssh_test_server::{SshServerBuilder, User};
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() {
+    /// let _ssh = SshServerBuilder::default()
+    ///     .add_user(User::new_admin("root", "pass"))
+    ///     .add_user(User::new("luiza", "obrazy"))
+    ///     .run()
+    ///     .await
+    ///     .unwrap();
+    /// # }
+    /// ```
     pub fn add_user(mut self, user: User) -> Self {
         self.users.push(user);
         self
     }
 
+    /// Add list of users.
+    ///
+    ///
+    /// ```
+    /// # use ssh_test_server::{SshServerBuilder, User};
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() {
+    /// let users = vec![User::new("a", "p"), User::new("b", "p")];
+    /// let _ssh = SshServerBuilder::default()
+    ///     .add_users(&users)
+    ///     .run()
+    ///     .await
+    ///     .unwrap();
+    /// # }
+    /// ```
     pub fn add_users(mut self, users: &[User]) -> Self {
         for u in users {
             self.users.push(u.clone());
@@ -35,23 +82,80 @@ impl SshServerBuilder {
         self
     }
 
+    /// Add custom command/program.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use ssh_test_server::{SshExecuteContext, SshServerBuilder, SshExecuteResult, User};
+    /// fn cmd_print_message(
+    ///     context: &SshExecuteContext,
+    ///     program: &str,
+    ///     args: &[&str],
+    /// ) -> SshExecuteResult {
+    ///     let stdout = format!(
+    ///         "Program {program} run by {} has {} args.",
+    ///         context.current_user,
+    ///         args.len()
+    ///     );
+    ///     SshExecuteResult::stdout(0, stdout)
+    /// }
+    ///
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() {
+    /// let _ssh = SshServerBuilder::default()
+    ///     .add_program("print_message", Box::new(cmd_print_message))
+    ///     .run()
+    ///     .await
+    ///     .unwrap();
+    /// # }
+    /// ```
     pub fn add_program(mut self, program: &str, handler: Box<SshExecuteHandler>) -> Self {
         self.programs.insert(program.to_string(), handler);
         self
     }
 
-    /// Listen address
+    /// Listen on address.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use ssh_test_server::SshServerBuilder;
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() {
+    /// let _ssh = SshServerBuilder::default()
+    ///     .bind_addr("127.0.0.1")
+    ///     .run()
+    ///     .await
+    ///     .unwrap();
+    /// # }
     pub fn bind_addr(mut self, bind_addr: &str) -> Self {
         self.bind_addr = Some(bind_addr.to_string());
         self
     }
 
-    /// Listen port
+    /// Listen on port.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use ssh_test_server::SshServerBuilder;
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() {
+    /// let _ssh = SshServerBuilder::default()
+    ///     .port(9992)
+    ///     .run()
+    ///     .await
+    ///     .unwrap();
+    /// # }
     pub fn port(mut self, port: u16) -> Self {
         self.port = Some(port);
         self
     }
 
+    /// Build and run the ssh server.
+    ///
+    /// Server stops when [SshServer] is dropped.
     pub async fn run(self) -> Result<SshServer> {
         let host = self
             .bind_addr

@@ -1,7 +1,5 @@
 use cucumber::{given, then, when, World};
-use ssh_test_server::builder::SshServerBuilder;
-use ssh_test_server::user::User;
-use ssh_test_server::SshServer;
+use ssh_test_server::{SshServer, SshServerBuilder, User};
 
 mod common;
 
