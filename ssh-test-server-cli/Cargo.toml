@@ -12,10 +12,10 @@ keywords = ["ssh", "test"]
 categories = ["development-tools::testing"]
 
 [dependencies]
-clap = { version = "4.0.32", features = ["derive"] }
+clap = { version = "4.5.20", features = ["derive"] }
 ssh-test-server = { version = "0.1.1", path = "../ssh-test-server" }
-tokio = { version = "1.29.1", features = ["rt-multi-thread", "macros", "signal", "fs"] }
+tokio = { version = "1.41.1", features = ["rt-multi-thread", "macros", "signal", "fs"] }
 tracing = "0.1.40"
-tracing-subscriber = { version = "0.3.17", features = ["env-filter", "tracing-log"] }
+tracing-subscriber = { version = "0.3.18", features = ["env-filter", "tracing-log"] }
 
 

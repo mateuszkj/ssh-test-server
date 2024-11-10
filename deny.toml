@@ -2,7 +2,8 @@
 
 ignore = [
     # Marvin Attack: potential key recovery through timing sidechannels
-    { id = "RUSTSEC-2023-0071", reason = "There is no workaround https://github.com/Eugeny/russh/issues/337." }
+    { id = "RUSTSEC-2023-0071", reason = "There is no workaround https://github.com/Eugeny/russh/issues/337." },
+    { id = "RUSTSEC-2024-0384", reason = "Crate instant is only used in tests." },
 ]
 
 [licenses]
