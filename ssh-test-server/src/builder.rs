@@ -3,7 +3,7 @@ use crate::user::User;
 use crate::{SshExecuteHandler, SshServer};
 use anyhow::Result;
 use rand::Rng;
-use random_port::PortPicker;
+use random_port::{PortPicker, Protocol};
 use russh::{server, MethodSet};
 use russh_keys::key;
 use russh_keys::key::KeyPair;
@@ -162,8 +162,12 @@ impl SshServerBuilder {
             .clone()
             .unwrap_or_else(|| "127.0.0.1".to_string());
 
+        let port_picker = PortPicker::new()
+            .host(host.clone())
+            .protocol(Protocol::Tcp)
+            .random(true);
         let port = self.port.unwrap_or_else(|| {
-            PortPicker::new().random(true).pick().unwrap_or_else(|_| {
+            port_picker.pick().unwrap_or_else(|_| {
                 let mut rng = rand::thread_rng();
                 rng.gen_range(15000..55000)
             })
