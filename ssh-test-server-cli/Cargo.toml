@@ -13,7 +13,7 @@ categories = ["development-tools::testing"]
 
 [dependencies]
 clap = { version = "4.5.20", features = ["derive"] }
-ssh-test-server = { version = "0.1.1", path = "../ssh-test-server" }
+ssh-test-server = { version = "0.1.2", path = "../ssh-test-server" }
 tokio = { version = "1.41.1", features = ["rt-multi-thread", "macros", "signal", "fs"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "tracing-log"] }

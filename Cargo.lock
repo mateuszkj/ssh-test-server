@@ -2290,7 +2290,7 @@ dependencies = [
 
 [[package]]
 name = "ssh-test-server"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2307,7 +2307,7 @@ dependencies = [
 
 [[package]]
 name = "ssh-test-server-cli"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "clap",
  "ssh-test-server",
